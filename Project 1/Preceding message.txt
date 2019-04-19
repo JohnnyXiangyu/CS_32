@@ -1,0 +1,12 @@
+Exploring the city one evening, you enter an apparent nightspot intriguingly
+named Club Zombie. You're immediately grabbed, armed with a club, and dropped
+into an arena where you're pitted in combat against zombies for the amusement
+of the bloodthirsty patrons.
+
+You need to hit a zombie twice to really kill it. 
+Once you get a hit from the zombie, you lose your life. 
+
+Enter u/d/l/r to move to the corresponding directions, or attack the zombie
+in that direction.
+
+Enter h to review your killing history, or q to quit.
