@@ -1,0 +1,79 @@
+Name = Xiangyu Wan
+UID = 805061659
+
+Q1:
+//////////////////////////////////////////////////
+functions that can be marked const:
+	bool empty();
+	int size();
+	bool get(int pos, std::string& value);
+	int find(const std::string& value);
+
+class Sequence
+{
+  public:
+    Sequence();    
+    bool empty() const; 
+    int size() const;
+    int insert(int pos, const std::string& value);
+    int insert(const std::string& value);
+    bool erase(int pos);
+    int remove(const std::string& value);
+    bool get(int pos, std::string& value) const;
+    bool set(int pos, const std::string& value);
+    int find(const std::string& value) const;
+    void swap(Sequence& other);
+};
+///////////////////////////////////////////////////
+
+Q2
+///////////////////////////////////////////////////
+using Type = std::string;
+
+class Sequence
+{
+  public:
+    Sequence();    
+    bool empty() const; 
+    int size() const;
+    int insert(int pos, const Type& value);
+    int insert(const Type& value);
+    bool erase(int pos);
+    int remove(const Type& value);
+    bool get(int pos, Type& value) const;
+    bool set(int pos, Type& value);
+    int find(const Type& value) const;
+    void swap(Sequence& other);
+};
+///////////////////////////////////////////////////
+
+Q3
+//////////////////////////////////////////////////
+
+//////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
