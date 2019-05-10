@@ -1,0 +1,317 @@
+List design:
+//a simple graph of a 6-node list
+
+                   0            1            2            3            4            5
+         ItemType data         data         data         data         data         data
+            Node* next-------->next-------->next-------->next-------->next-------->next-------->nullptr
+nullptr<----Node* previous<----previous<----previous<----previous<----previous<----previous
+
+As shown in the graph, each node in the doubly linked list is a struct that has three public data members: ItemType data, Node* next, and Node* previous. As their names suggest, "next" contains address of the logically following item, forming the in-to direction, while "previous" contains address of the logically previous item, forming the out-of direction.
+
+This design is not circular, and has no dummy node. The first item is marked by its previous data member of nullptr, and the last item in the list is marked by its next value of nullptr.
+
+
+Pseudocode:
+Sequence::Sequence(const Sequence& other) {
+	copy size
+	deep copy other's list into this
+}
+
+Sequence::~Sequence() {
+	erase the first item until it's empty
+}
+
+Sequence& Sequence::operator=(const Sequence& other) {
+	erase the first item of this until it's empty
+	copy size
+	deep copy RHS's list into LHS
+}
+
+int Sequence::insert(int pos, const ItemType& value) {
+	return -1 if pos is out of range
+	if list is empty:
+		create new 1-item list with givn value
+		return pos
+	create new node with value and link it to the given position
+} 
+	
+int Sequence::insert(const ItemType& value) {
+	find first node with data bigger than or equal to value or determine the new node goes at end
+	insert new node with value at the found position
+}
+
+bool Sequence::erase(int pos) {
+	return false if pos is out of range
+	find item at pos
+	relink its previous and next
+	delete this item and decrease size by 1, return true
+}
+
+int Sequence::remove(const ItemType& value) {
+	return 0 if the list is empty
+	going through every position:
+		erase item at this position if it stores the given value
+	return how many erases had been executed
+}
+
+int subsequence(const Sequence& seq1, const Sequence& seq2) {
+	return -1 if either argument is empty or seq2 is longer
+	loop positions in seq1 that has enough space for seq2 behind it:
+		if at this position item from seq1 and seq2's head node have same data:
+			break if he next nodes' data don't match seq2
+			return current position if the following data match the whole list of seq2
+	return -1 since nothing is found when this line is called
+}
+
+void interleave(const Sequence& seq1, const Sequence& seq2, Sequence& result) {
+	create two new pointers to class Sequence	
+	point them to the two arguments or their copies if aliasing
+	clear result sequence
+	if seq1 and seq2 are empty:
+		break out of function
+	if either of seq1 and seq2 is empty:
+		copy the non-empty sequence into result
+		break out of function
+	loop through the longer sequence's length
+		insert into result seq1's item at current position if there is
+		insert into result seq2's item at current position if there is
+	delete any newed items
+}
+
+
+
+
+Test cases:
+//
+void normal_Sequence_test() {
+	Sequence s;
+	Sequence f;
+
+	//test empty()
+	assert(s.empty());
+	assert(f.empty());
+
+	//test insert() and her return value
+	assert(s.insert(0, 10) == 0);
+	assert(s.insert(20) == s.size() - 1);
+	assert(s.insert(30) == s.size() - 1);
+	assert(s.insert(40) == s.size() - 1); //these should be inserted at the end
+
+	//test size()
+	assert(s.size() == 4);
+
+	//test insert()'s fail report feature
+	assert(s.insert(10000, 1) == -1);
+
+	//test erase() and remove
+	assert(s.erase(3) == true);
+	assert(s.size() == 3);
+	assert(s.remove(10) == 1);
+	assert(s.size() == 2);
+	assert(s.remove(100000) == 0); //remove() should be able to return 0
+
+	//test .get()
+	ItemType test = 0;
+	assert(s.get(0, test) == true);
+	assert(test == 20);
+	assert(s.get(10000000, test) == false);
+
+	//test set()
+	ItemType test_in = 3500;
+	assert(s.set(0, test_in) == true);
+	s.get(0, test);
+	assert(test == 3500);
+	assert(s.set(1000000, test_in) == false);
+
+	//test find()
+	assert(s.find(test_in) == 0);
+	assert(s.find(30) == 1);
+	assert(s.find(5000) == -1);
+
+	//test swap()
+	assert(f.size() == 0);
+	s.swap(f); //TODO
+	assert(f.size() == 2); //TODO
+	assert(s.size() == 0);
+	assert(f.find(test_in) == 0);
+	assert(f.find(30) == 1);
+
+	cerr << "Sequence class passed all tests" << endl;
+}
+
+void subsequence_tests() {
+	//normal mode
+	Sequence s1, s2;
+	for (int i = 10; i <= 100; i += 10)
+		s1.insert(i);
+	assert(s1.size() == 10);
+	for (int i = 40; i <= 70; i += 10)
+		s2.insert(i);
+	assert(s2.size() == 4);
+	assert(subsequence(s1, s2) == 3);
+
+	//lots of elements
+	Sequence s3, s4;
+	for (int i = 1; i <= 100; i += 1)
+		s3.insert(i);
+	assert(s3.size() == 100);
+	for (int i = 40; i <= 70; i += 1)
+		s4.insert(i);
+	assert(s4.size() == 31);
+	assert(subsequence(s3, s4) == 39);
+
+	//empty seq2
+	Sequence s5;
+	assert(subsequence(s3, s5) == -1);
+
+	//seq1 too short
+	Sequence s6;
+	for (int i = 1; i <= 10; i++)
+		s6.insert(i);
+	assert(s6.size() == 10);
+	assert(subsequence(s6, s3) == -1);
+
+	//not match
+	assert(subsequence(s3, s1) == -1);
+
+
+	cerr << "Subsequence passes all tests." << endl;
+}
+
+void interleave_tests() {
+	//m == n
+	Sequence s1, s2, s3, s4;
+	ItemType item1, item2;
+	for (int i = 1; i <= 100; i++) {
+		s1.insert(i-1, i);
+		s2.insert(i-1, i*10);
+		s3.insert(2 * i - 2, i);
+		s3.insert(2 * i - 1, i * 10);
+	}
+	interleave(s1, s2, s4);
+	assert(s4.size() == s1.size() + s2.size());
+	for (int i = 0; i < 200; i++) {
+		s3.get(i, item1);
+		s4.get(i, item2);
+		assert(item1 == item2);
+	}
+
+	//m < n
+	Sequence s5 = s2;
+	Sequence s6 = s3;
+	for (int i = 1; i <= 10; i++) {
+		s5.insert(s5.size(), i * 100);
+		s6.insert(s6.size(), i * 100);
+	}
+	interleave(s1, s5, s4);
+	assert(s4.size() == s6.size());
+	for (int i = 0; i < 210; i++) {
+		s6.get(i, item1);
+		s4.get(i, item2);
+		assert(item1 == item2);
+	}
+
+	//m > n
+	s5 = s1;
+	s6 = s3;
+	for (int i = 1; i <= 10; i++) {
+		s5.insert(s5.size(), i * 100);
+		s6.insert(s6.size(), i * 100);
+	}
+	interleave(s5, s2, s4);
+	assert(s4.size() == s6.size());
+	for (int i = 0; i < 210; i++) {
+		s6.get(i, item1);
+		s4.get(i, item2);
+		assert(item1 == item2);
+	}
+
+	//m = 0
+	int steps = s5.size();
+	for (int i = 0; i < steps; i++)
+		s5.erase(0);
+	interleave(s5, s2, s4);
+	assert(s4.size() == s2.size());
+	for (int i = 0; i < s2.size(); i++) {
+		s2.get(i, item1);
+		s4.get(i, item2);
+		assert(item1 == item2);
+	}
+
+	//n = 0
+	interleave(s1, s5, s4);
+	assert(s4.size() == s1.size());
+	for (int i = 0; i < s1.size(); i++) {
+		s1.get(i, item1);
+		s4.get(i, item2);
+		assert(item1 == item2);
+	}
+
+	//both are 0 and aliasing parameter
+	interleave(s5, s5, s4);
+	assert(s4.size() == 0);
+	assert(s4.empty());
+
+	//normal aliasing
+	interleave(s1, s1, s4);
+	ItemType item3;
+	assert(s4.size() == s1.size()*2);
+	for (int i = 0; i < s1.size(); i++) {
+		s1.get(i, item1);
+		s4.get(i*2, item2);
+		s4.get(i * 2 + 1, item3);
+		assert(item1 == item2);
+		assert(item1 == item3);
+	}
+
+	s1 = s4;
+
+	cerr << "Interleave passes all tests." << endl;
+}
+
+void extreme_pos_tests() {
+//test for scenarios where target position is the first or last item, or there's no item at all
+	//insert empty
+	Sequence s1, s0;
+	s1.insert(0, 10);
+	assert(s1.size() == 1);
+
+	//insert end
+	s1 = s0;
+	for (int i = 0; i < 5; i++)
+		assert(s1.insert(i) == s1.size() - 1);
+	assert(s1.insert(s1.size(), 10) == s1.size() - 1);
+
+	//insert head and erase end
+	s1 = s0;
+	for (int i = 5; i > 0; i--)
+		assert(s1.insert(i) == 0);
+	assert(s1.insert(0, 10) == 0);
+	for (int i = 1; i <= 6; i++)
+		assert(s1.erase(s1.size() - 1));
+
+	//erase empty
+	assert(!s0.erase(0));
+
+	//get empty and set empty
+	s1 = s0;
+	ItemType temp = 0;
+	assert(!s1.get(0, temp));
+	assert(temp == 0);
+	assert(!s1.set(0, temp));
+
+	//remove empty
+	s1 = s0;
+	assert(s1.remove(0) == 0);
+
+	//find empty
+	s1 = s0;
+	assert(s1.find(0) == -1);
+
+	//swap empty
+	//s1.swap(s0);
+	assert(s1.empty());
+	assert(s0.empty());
+	
+	cerr << "Sequence class passed all expreme-position tests." << endl;
+}
