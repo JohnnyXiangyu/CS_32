@@ -1,0 +1,9 @@
+problem_2:
+first 12 coordinates popped from stack:
+(3,5) (3,6) (3,4) (2,4) (1,4) (1,3) (1,2) (1,1) (2,1) (3,3) (4,5) (5,5)
+
+problem_4:
+first 12 coordinates popped from queue:
+(3,5) (4,5) (3,4) (3,6) (5,5) (3,3) (2,4) (6,5) (5,4) (1,4) (7,5) (5,3)
+
+The main difference between queue and stack in this application is that when the possible path is splitted into branches, stack will go into one of the branches until reaching destination or there's no way to go, then try the next branch, whereas the algorithm implemented with a queue will parallelly try each of the branches, pushing their connected paths. As a result, the path a stack implementation takes is from branch to branch, while with a queue implementation it's more like a level to level movement. If there is only one way through the maze, queue would be more efficient, while in the other occation stack would be more efficient.
