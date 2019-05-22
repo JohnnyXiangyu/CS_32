@@ -1,0 +1,397 @@
+Board class design:
+===================
+    For my board class implementation, I used vector as my data structure. The only difference between vector and dynamically allocated arrays here, for me, is that vectors have already got copy constructor and destructor so I don't have to risk writing incorrect ones for an array. 
+
+    To actually use this datastructure I implemented a helper function, "locate()", that takes a side and a hole number and return the actual index of vector elements. It's very easy and efficient to use a vector or array in this case, as they both connect the two sides of board and allow random access. 
+
+    A private data member I declared is int m_totalHoles. This member is just here for efficiency, as some of the functions might require modulus operation based on this value. It's calculated during construction, since the board won't get larger or smaller, it'll be safe.
+
+
+Game class design:
+==================
+    In the private part, there are two pointers to players, a Board, a Side variable indicating which side is now active, and a Pointer to player indicating which player is now active. During construction, pointers to the two players in this game are copied, the Board is copied; then the side and Plyaer* data members are set to SOUTH and the south player.
+
+
+Player, HumanPlayer, BadPlayer design:
+======================================
+    HumanPlayer and BadPlayer are inherited from Player class and has very simple implementations for chooseMove() function. BadPlayer::chooseMove() will simply return the first legal hole to choose (first means hole number is smallest).
+
+
+
+SmartPlayer::chooseMove() design:
+=================================
+    For SmartPlayer, chooseMove() function is devided into 3 parts: chooseMove() itself ssimulates the first move, and then use a helper function evaluate() to generate the heuristic for this move, which is win/lose or difference in scores. evaluate() will recursely go into all possblities from the given board. When the game has a winner, either one side is empty or a player has gained more than half of all beans in his pot, or when the recursion hits the runtime limit, evaluate hits base case and return the evaluation of the current result on board.
+
+    In both chooseMove() and evaluate(), every time a heuristic is returned, it's compared with the score of last movement. Then the best move would be chosen for the player at this depth, self or opponent, according to the heuristics.
+
+    The heuristic system works like this: all the heuristics are based on (North - South), that is, no matter which side is active now, the score is positive when North is doing better; then, in the compare process metioned above, a helper function sideSwitch will take the current side and return 1 for North and -1 for South and multiply the compared heuristics by this coefficient. Therefore when South is comparing the scores, it's actually choosing the least score.
+
+    Using this strcuture, chooseMove() and evaluate() would have very similar code, since they will need the same code for extra rounds and captures.
+
+    An additional data member, maxDepth, is included in SmartPlayer class to indicate how deep the search should go. It's combined with AlarmClock to control runtime.
+
+
+
+Pseudocode:
+===========
+Board::sow()
+    if input is invalid:
+        return false;
+
+    find the hole in vector m_holes, 
+    record how many beans are in there and empty the hole;
+
+    loop number of beans times:
+        if it's opponent's pot:
+            skip this hole;
+        go to the next hole and increment its number of beans;
+
+    calculate and set endHole and endSide;
+    return true;
+
+
+Board::moveToPot()
+    if input is invalid:
+        return false;
+    locate the hole,
+    empty this hole and increment the indicated player's pot by its amount of beans
+
+    return true;
+
+
+Board::locate()
+    if input is south hole:
+        return side * m_totalHoles / 2;
+    else:
+        return abs((1 - side) * m_totalHoles - hole);
+
+
+Game::status()
+    if both sides are not empty:
+        set over to false;
+    else:
+	set over to true;
+	compare total beans on each side:
+            if one is more than the other: set hasWinner to true, set winner to the winning side;
+            else: set hasWinner to false;
+
+
+bool Game::move()
+    return false if there's no move
+    while true:
+        have current player choose a hole; //assuming the chooseMove() only return okay choices
+        sow the chosen hole;
+        if game over:
+            display the resulting board; 
+            move all remaining beans to board;		
+        if the last bean ends up in pot:
+            display the board;
+            continue looping;			
+        else if a capture is triggered:
+            move beans from endHole and corresponding hole on opponent side to current player's pot
+            display the board;
+            if game over:
+                display the resulting board; 
+                move all remaining beans to board
+                break;		
+        else:
+            display the board;
+            break;
+    change current player;
+    return true;
+
+
+Game::play():
+    display board;
+    make a move;
+    if game nor over:
+        while true:
+            if both players are bot:
+                stop until user presses enter;
+            make move;
+            break if game ends;
+    determine and display game results;
+
+
+HumanPlayer::chooseMove()
+    if there's no move allowed:
+        return -1;
+    while true:
+        prompt and get input from user;
+        if the imput is valid:
+            return input;
+        else if input is invalid:
+            print error message;
+            continue to next loop;
+
+
+BadPlayer::chooseMove()
+    loop all holes:
+        if current hole is choose-able: 
+            break;
+    if the above loop didn't find a legal choice:
+        return -1;
+    else:
+        return the smallest legal choice;
+
+
+SmartPlayer::chooseMove():
+    set alarm;
+    if game over:
+        return -1;
+    loop every hole on s's side:
+        if current hole is the last hole and there's no legal hole before it:
+            set result to current hole;
+            break loop;
+        copy the board;
+        attempt to sow on the copied board
+        if not successful:
+            continue;	
+        if there's extra round:
+            set score to evaluation of the resulting board with same side;	
+        else if there's capture:
+            move the captured beans to pot;
+            set score to evaluation of the resulting board with opponent side and incremented depth
+        else:
+            set score to evaluation of the resulting board with opponent side and incremented depth
+        if score is better than the current best solution:
+            update best solution;
+            break if current score indicates a victory;
+    return result;
+
+
+SmartPlayer::evaluate():
+    increment depth;
+    if game over:
+        return +99 for north win, -99 for south win, or 0 for tie;
+    if either side gained more than half of total beans:
+        return +99 for north or -99 for south;
+    if it's too deep in the tree:
+        return difference between pots;
+    loop every hole on s's side:
+        if current hole is the last hole and there's no legal hole before it:
+            set result to current hole and break loop;
+        attempt to sow on a copied board
+        if not successful:
+            continue;	
+        if there's extra round:
+            set score to evaluation of the resulting board with same side and don't increment depth;	
+        else if there's capture:
+            move the captured beans to pot;
+            set score to evaluate of the resulting board with opponent side;
+        else:
+            set score to evaluate of the resulting board with opponent side;
+        if score is better than the current best solution:
+            update score;
+            break if current score indicates a victory;
+    return score;
+
+
+
+test cases:
+===========
+void demo() {
+    //they should both make legal choices and result in similar scores
+    //Board and Game classes should function normally
+    //the results are eye-ball checked
+    SmartPlayer bp1("South");
+    SmartPlayer bp2("North");
+    Board b(6, 4);
+    Game g(b, &bp1, &bp2);
+    g.play();
+}
+
+void doGameTests()
+{
+	BadPlayer bp1("Bart");
+	BadPlayer bp2("Homer");
+	Board b(3, 0);
+	b.setBeans(SOUTH, 1, 2);
+	b.setBeans(NORTH, 2, 1);
+	b.setBeans(NORTH, 3, 2);
+	Game g(b, &bp1, &bp2);
+	bool over;
+	bool hasWinner;
+	Side winner;
+	//    Homer
+	//   0  1  2
+	// 0         0
+	//   2  0  0
+	//    Bart
+	g.status(over, hasWinner, winner);
+	assert(!over && g.beans(NORTH, POT) == 0 && g.beans(SOUTH, POT) == 0 &&
+		g.beans(NORTH, 1) == 0 && g.beans(NORTH, 2) == 1 && g.beans(NORTH, 3) == 2 &&
+		g.beans(SOUTH, 1) == 2 && g.beans(SOUTH, 2) == 0 && g.beans(SOUTH, 3) == 0);
+
+	g.move();
+	//   0  1  0
+	// 0         3
+	//   0  1  0
+	g.status(over, hasWinner, winner);
+	assert(!over && g.beans(NORTH, POT) == 0 && g.beans(SOUTH, POT) == 3 &&
+		g.beans(NORTH, 1) == 0 && g.beans(NORTH, 2) == 1 && g.beans(NORTH, 3) == 0 &&
+		g.beans(SOUTH, 1) == 0 && g.beans(SOUTH, 2) == 1 && g.beans(SOUTH, 3) == 0);
+
+	g.move();
+	//   1  0  0
+	// 0         3
+	//   0  1  0
+	g.status(over, hasWinner, winner);
+	assert(!over && g.beans(NORTH, POT) == 0 && g.beans(SOUTH, POT) == 3 &&
+		g.beans(NORTH, 1) == 1 && g.beans(NORTH, 2) == 0 && g.beans(NORTH, 3) == 0 &&
+		g.beans(SOUTH, 1) == 0 && g.beans(SOUTH, 2) == 1 && g.beans(SOUTH, 3) == 0);
+
+	g.move();
+	//   1  0  0
+	// 0         3
+	//   0  0  1
+	g.status(over, hasWinner, winner);
+	assert(!over && g.beans(NORTH, POT) == 0 && g.beans(SOUTH, POT) == 3 &&
+		g.beans(NORTH, 1) == 1 && g.beans(NORTH, 2) == 0 && g.beans(NORTH, 3) == 0 &&
+		g.beans(SOUTH, 1) == 0 && g.beans(SOUTH, 2) == 0 && g.beans(SOUTH, 3) == 1);
+
+	g.move();
+	//   0  0  0
+	// 1         4
+	//   0  0  0
+	g.status(over, hasWinner, winner);
+	g.display();
+	assert(over && g.beans(NORTH, POT) == 1 && g.beans(SOUTH, POT) == 4 &&
+		g.beans(NORTH, 1) == 0 && g.beans(NORTH, 2) == 0 && g.beans(NORTH, 3) == 0 &&
+		g.beans(SOUTH, 1) == 0 && g.beans(SOUTH, 2) == 0 && g.beans(SOUTH, 3) == 0);
+	assert(hasWinner && winner == SOUTH);
+}
+
+void doPlayerTests()
+{
+	HumanPlayer hp("Marge");
+	assert(hp.name() == "Marge"  &&  hp.isInteractive());
+	BadPlayer bp("Homer");
+	assert(bp.name() == "Homer" && !bp.isInteractive());
+	SmartPlayer sp("Lisa");
+	assert(sp.name() == "Lisa" && !sp.isInteractive());
+	Board b(3, 2);
+	b.setBeans(SOUTH, 2, 0);
+	//    
+	//   2  2  2
+	// 0         0
+	//   2  0  2
+	//    
+	cout << "=========" << endl;
+	int n = hp.chooseMove(b, SOUTH);
+	cout << "=========" << endl;
+	assert(n == 1 || n == 3);
+	n = bp.chooseMove(b, SOUTH);
+	assert(n == 1 || n == 3);
+	n = sp.chooseMove(b, SOUTH);
+	assert(n == 1 || n == 3);
+}
+
+void doBoardTests()
+{
+	Board b(3, 2);
+	assert(b.holes() == 3 && b.totalBeans() == 12 &&
+		b.beans(SOUTH, POT) == 0 && b.beansInPlay(SOUTH) == 6);
+	b.setBeans(SOUTH, 1, 1);
+	b.moveToPot(SOUTH, 2, SOUTH);
+	assert(b.totalBeans() == 11 && b.beans(SOUTH, 1) == 1 &&
+		b.beans(SOUTH, 2) == 0 && b.beans(SOUTH, POT) == 2 &&
+		b.beansInPlay(SOUTH) == 3);
+	Side es;
+	int eh;
+	b.sow(SOUTH, 3, es, eh);
+	assert(es == NORTH && eh == 3 && b.beans(SOUTH, 3) == 0 &&
+		b.beans(NORTH, 3) == 3 && b.beans(SOUTH, POT) == 3 &&
+		b.beansInPlay(SOUTH) == 1 && b.beansInPlay(NORTH) == 7);
+}
+
+
+void otherBoardTest() {
+	//test on performence under multiple rounds
+	Board b(3, 0);
+	b.setBeans(SOUTH, 1, 15);
+	int endHole;
+	Side endSide;
+	b.sow(SOUTH, 1, endSide, endHole);
+	assert(b.beans(SOUTH, 1) == 2);
+	assert(b.beans(NORTH, POT) == 0);
+	assert(b.beans(SOUTH, 2) == 3);
+	assert(b.beans(SOUTH, 0) == 2);
+	assert(endSide == SOUTH && endHole == 2);
+	assert(b.totalBeans() == 15);
+}
+
+void otherGameTest() {
+	Board b(3, 0);
+	b.setBeans(SOUTH, 1, 15);
+	b.setBeans(NORTH, 2, 8);
+	BadPlayer bp1("Bart");
+	BadPlayer bp2("Homer");
+	Game g(b, &bp1, &bp2);
+	//capture with multiple rounds
+	g.move();
+	assert(g.beans(SOUTH, 1) == 2);
+	assert(g.beans(NORTH, POT) == 0);
+	assert(g.beans(NORTH, 2) == 0);
+	assert(g.beans(SOUTH, 2) == 0);
+	assert(g.beans(SOUTH, 0) == 15);
+}
+
+void extraRoundTest() {
+	//extra round after multiple rounds
+	Board c(3, 0);
+	c.setBeans(SOUTH, 1, 17);
+	c.setBeans(NORTH, 1, 1);
+	BadPlayer bp1("Bart");
+	BadPlayer bp2("Homer");
+	Game g2(c, &bp1, &bp2);
+	g2.move();
+	assert(g2.beans(SOUTH, 1) == 0);
+	assert(g2.beans(SOUTH, 2) == 4);
+	assert(g2.beans(SOUTH, 3) == 4);
+	assert(g2.beans(SOUTH, 0) == 3);
+}
+
+
+void misc() {
+	Board test(3, 10);
+	//test setBeans
+	for (int i = -1; i < 100; i++)
+	{
+
+		assert(!test.setBeans(SOUTH, i, 1));
+		assert(!test.setBeans(NORTH, i, 1));
+		if (i == -1)
+		{
+			i = 3;
+		}
+	}
+
+	assert(test.beans(NORTH, 1) == 0);
+	assert(test.beans(NORTH, 0) == 11);
+	assert(test.beans(NORTH, 2) == 11);
+	assert(test.beans(NORTH, 3) == 11);
+	assert(test.beans(SOUTH, 2) == 12);
+	assert(test.beans(SOUTH, 3) == 12);
+	assert(test.beans(SOUTH, 1) == 1);
+	assert(test.beans(SOUTH, 0) == 2);
+	for (int i = 1; i < 4; i++)
+	{
+
+		assert(!test.setBeans(SOUTH, i, -1));
+		assert(!test.setBeans(NORTH, i, -1));
+
+	}
+	assert(test.beans(NORTH, 1) == 0);
+	assert(test.beans(NORTH, 0) == 11);
+	assert(test.beans(NORTH, 2) == 11);
+	assert(test.beans(NORTH, 3) == 11);
+	assert(test.beans(SOUTH, 2) == 12);
+	assert(test.beans(SOUTH, 3) == 12);
+	assert(test.beans(SOUTH, 1) == 1);
+	assert(test.beans(SOUTH, 0) == 2);
+}
+
+
+
+
