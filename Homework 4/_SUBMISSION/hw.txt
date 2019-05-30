@@ -1,0 +1,30 @@
+Problem 2
+=======
+    There's no overloaded comparison operators for Coord class, so the expression (value > p->m_value) won't compile.
+
+
+Problem 4
+=======
+b)
+    If I only have the one parameter overload, and I have to implement it recursively, it'll be impossible to trace back more than 1 level of parent domain, i.e. the function won't be able to print cs.ucla.edu, but only cs.ucla .
+
+
+Problem 5
+=======
+a)
+    O(N^3)
+    Because every layer of the loop will loop from 0 to N-1, and there are 3 layers in this program.
+b)
+    O(N^3)
+    The inner most loop will be repeated 1+2+...+N times, or (1+N)*N/2 times, and itself will loop N times, so the total runtime will be [(1+N)*N^2]/2. Ignoring coefficients and constants in the expression, we get O(N^3).
+
+
+Problem 6
+=======
+a) 
+    O(N^2)
+    Because the two sequences both have N elements, the first loop will loop N times and the second loop won't do anything. Within the first loop, each call to get() function will have a time complexity depending on k, which varies from 0 to N-1. For the total time complexity, we take the maximum number of k for every loop, resulting in O(N^2)
+b)
+    O(N)
+    Since both seq1 and seq2 have N items, the first for loop will loop N times while the second will do nothing, and within each loop there are only constant amount of operations. After the loops, swap only exchange two pointers and the destructor will perform N operations, therefore the resulting time complexity is O(N).
+    It's better than the previous algorithm in this sence.
