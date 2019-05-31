@@ -7,25 +7,34 @@
 using namespace std;
 
 HashTable::HashTable() {
-	for (int i = 0; i < 999999999; i++) {
-		vector<item> stuff; //the last digit of hash value
-		m_items.push_back(stuff);
+	
+	for (long long i = 0; i < 99999989; i++) {
+		m_items.push_back(nullptr);
 	}
 }
 
 int HashTable::push(int start, const string& newItem) {
-	int value = hash<string>()(newItem);
-	m_items[value / 10].push_back(item(start, newItem));
+	long long value = hash<string>()(newItem);
+	if (m_items[value % 99999989] == nullptr) {
+		m_items[value % 99999989] = new vector<Item>;
+	}
+
+	(*m_items[value % 99999989]).push_back(Item(start, newItem));
 	return value;
 }
 
-bool HashTable::search(const std::string& seg, std::queue<item>& results) {
+bool HashTable::search(const std::string& seg, std::queue<Item>& results) {
 	bool yesFound = false;
-	vector<item> found;
-	found = m_items[hash<string>()(seg) / 10];
+	vector<Item> found;
+	long long fInd = hash<string>()(seg);
+	fInd %= 99999989;
+	if (m_items[fInd] == nullptr)
+		return false;
+	else
+		found = *m_items[fInd];
 
 	//traverse the table bucket, find any matches
-	for (vector<item>::iterator i = found.begin(); i != found.end(); i++) {
+	for (vector<Item>::iterator i = found.begin(); i != found.end(); i++) {
 		if ((*i).content == seg) {
 			results.push(*i);
 			yesFound = true;

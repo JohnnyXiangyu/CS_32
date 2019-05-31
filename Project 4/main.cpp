@@ -9,19 +9,27 @@
 #include "HashTable.h"
 using namespace std;
 
-
+void printInstruction(ostream& _diff, const list<Instruction>& instructions) {
+	for (list<Instruction>::const_iterator i = instructions.begin(); i != instructions.end(); i++)
+		_diff << (*i).content;
+}
 
 void createDiff(istream& _old, istream& _new, ostream& _diff) {
 	const int SLICELEN = 8;
 	
 	string oldFile, newFile;
-	//TODO: read file into the strings
+	//read file into the strings
 	while (_old) {
 		string temp;
 		getline(_old, temp);
 		oldFile += temp;
 		//how do we process newline symbol?
 		//oldFile += '\n';
+	}
+	while (_new) {
+		string temp;
+		getline(_new, temp);
+		newFile += temp;
 	}
 
 	//slice the old string
@@ -43,55 +51,56 @@ void createDiff(istream& _old, istream& _new, ostream& _diff) {
 		assert(index == oldFile.size() - 1);
 	} //delete all temporary variables here
 
-	//TODO: look for all matches
-	list<instruction> instructions;
+	//look for all matches
+	//TODO: instruction construction problem
+	list<Instruction> instructions;
 	int index = 0;
 	while (index < newFile.size()) {
 		//find all matches in the original file
 		string seg = newFile.substr(index, SLICELEN);
-		queue<item> results;
+		queue<Item> results;
 		if (table.search(seg, results)) {
 			//TODO: if found, start to loop deeper into the string
-			queue<instruction> temp_commands;
+			queue<Instruction> temp_commands;
 			while (!results.empty()) {
 				int j = (results.front().offset + results.front().content.size());
 				int k = index;
 				while (j < oldFile.size() && k < newFile.size() && oldFile[j] == newFile[k])
 					;
-				temp_commands.push(instruction(j - results.front().offset, results.front().offset)); //copy instruction
+				temp_commands.push(Instruction(j - results.front().offset, results.front().offset)); //copy instruction
 				results.pop();
 			}
 			//choose the longest copy instruction
-			instruction chosen = temp_commands.front();
+			Instruction chosen = temp_commands.front();
 			temp_commands.pop();
 			while (!temp_commands.empty()) {
-				if (chosen.length() < temp_commands.front().length())
+				if (chosen.length < temp_commands.front().length)
 					chosen = temp_commands.front();
 				temp_commands.pop();
 			}
 			//finalize the copy instruction
 			instructions.push_back(chosen);
 
-			index += chosen.length();
+			index += chosen.length;
 		}
 		else {
 			//if not found, an ADD instruction will be added
 			string temp = "" + newFile[index];
-			instruction newGuy(1, temp); //add instruction
+			Instruction newGuy(1, temp); //add instruction
 
 			//merge two continuous ADD instructions
-			if (instructions.back().type() == 'A') {
+			if (instructions.back().type == 'A') {
 				newGuy = instructions.back().merge(newGuy);
 				instructions.pop_back();
-				instructions.push_back(newGuy);
 			}
+			instructions.push_back(newGuy);
 
 			index++;
 		}
 	}
 
 	//TODO: output instructions to the file
-
+	printInstruction(_diff, instructions);
 }
 
 bool applyDiff(istream& _old, istream& _diff, ostream& _new) {
@@ -166,11 +175,21 @@ bool runtest(string oldName, string newName, string diffName, string newName2)
 	return true;
 }
 
+void myTest() {
+	ifstream oldFile("_old.txt", ios::binary);
+	ifstream newFile("_new.txt", ios::binary);
+	ofstream diffFile("_diff.txt", ios::binary);
+
+	createDiff(oldFile, newFile, diffFile);
+}
+
+
 int main()
 {
 	//assert(runtest("myoldfile.txt", "mynewfile.txt", "mydifffile.txt", "mynewfile2.txt"));
 	//cerr << "Test PASSED" << endl;
 	
+	myTest();
 
 	return 0;
 }
