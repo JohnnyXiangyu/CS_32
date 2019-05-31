@@ -2,23 +2,18 @@
 #define HASHTABLE 1
 #include <string>
 #include <vector>
+#include <queue>
+#include "Utilities.h"
+
 
 class HashTable {
 public:
 	HashTable();
-	//~HashTable();
-	int push(int start, std::string newItem);
 	//push the given segment into hash table, and return the hash value of this segment
+	int push(int start, const std::string& newItem);
+	bool search(const std::string& seg, std::queue<item>& results);
 
 private:
-	struct item {
-		item(int length, int start, std::string data):
-			len(length), offset(start), content(data)
-		{}
-		int len;
-		int offset;
-		std::string content;
-	};
 	std::vector<std::vector<item>> m_items;
 };
 

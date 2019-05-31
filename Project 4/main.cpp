@@ -4,12 +4,15 @@
 #include <algorithm>
 #include <iterator>
 #include <cassert>
+#include <functional>
+#include <list>
 #include "HashTable.h"
 using namespace std;
 
 
+
 void createDiff(istream& _old, istream& _new, ostream& _diff) {
-	const int SLICELEN = 16;
+	const int SLICELEN = 8;
 	
 	string oldFile, newFile;
 	//TODO: read file into the strings
@@ -17,21 +20,20 @@ void createDiff(istream& _old, istream& _new, ostream& _diff) {
 		string temp;
 		getline(_old, temp);
 		oldFile += temp;
-		oldFile += '\n';
+		//how do we process newline symbol?
+		//oldFile += '\n';
 	}
 
-	//TODO: slice the old string
+	//slice the old string
 		//the hash class looks unreliable
 	HashTable table;
 	{
 		int remain = oldFile.size();
 		int index = 0;
 		while (remain > 0) {
-			string temp;
-			if (remain < SLICELEN) //slice the file into specified lengths
-				temp = oldFile.substr(index, SLICELEN);
-			else
-				temp = oldFile.substr(index, remain);
+			string temp;//slice the file into specified lengths
+			temp = oldFile.substr(index, SLICELEN);
+
 			table.push(index, temp); //push it into the hash table
 			
 			remain -= temp.length();
@@ -41,8 +43,54 @@ void createDiff(istream& _old, istream& _new, ostream& _diff) {
 		assert(index == oldFile.size() - 1);
 	} //delete all temporary variables here
 
-	//TODO: compare the two strings
+	//TODO: look for all matches
+	list<instruction> instructions;
+	int index = 0;
+	while (index < newFile.size()) {
+		//find all matches in the original file
+		string seg = newFile.substr(index, SLICELEN);
+		queue<item> results;
+		if (table.search(seg, results)) {
+			//TODO: if found, start to loop deeper into the string
+			queue<instruction> temp_commands;
+			while (!results.empty()) {
+				int j = (results.front().offset + results.front().content.size());
+				int k = index;
+				while (j < oldFile.size() && k < newFile.size() && oldFile[j] == newFile[k])
+					;
+				temp_commands.push(instruction(j - results.front().offset, results.front().offset)); //copy instruction
+				results.pop();
+			}
+			//choose the longest copy instruction
+			instruction chosen = temp_commands.front();
+			temp_commands.pop();
+			while (!temp_commands.empty()) {
+				if (chosen.length() < temp_commands.front().length())
+					chosen = temp_commands.front();
+				temp_commands.pop();
+			}
+			//finalize the copy instruction
+			instructions.push_back(chosen);
 
+			index += chosen.length();
+		}
+		else {
+			//if not found, an ADD instruction will be added
+			string temp = "" + newFile[index];
+			instruction newGuy(1, temp); //add instruction
+
+			//merge two continuous ADD instructions
+			if (instructions.back().type() == 'A') {
+				newGuy = instructions.back().merge(newGuy);
+				instructions.pop_back();
+				instructions.push_back(newGuy);
+			}
+
+			index++;
+		}
+	}
+
+	//TODO: output instructions to the file
 
 }
 
@@ -51,7 +99,6 @@ bool applyDiff(istream& _old, istream& _diff, ostream& _new) {
 
 	return false;
 }
-
 
 bool runtest(string oldName, string newName, string diffName, string newName2)
 {
@@ -125,4 +172,5 @@ int main()
 	//cerr << "Test PASSED" << endl;
 	
 
+	return 0;
 }
