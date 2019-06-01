@@ -15,16 +15,16 @@ struct Item {
 struct Instruction {
 	//a class marking each block of instruction
 	Instruction(int length, std::string newWord) :
-		type('A'), length(length), content("")
+		type('A'), length(length)//, content("")
 	{
-		content = "A" + std::to_string(length) + ':' + newWord;
+		//content = "A" + std::to_string(length) + ':' + newWord;
 		info = newWord;
 	}
 
 	Instruction(int length, int offset) :
-		type('C'), length(length), content("")
+		type('C'), length(length)//, content("")
 	{
-		content = "C" + std::to_string(length) + ',' + std::to_string(offset);
+		//content = "C" + std::to_string(length) + ',' + std::to_string(offset);
 		info = std::to_string(offset);
 	}
 
@@ -37,7 +37,7 @@ struct Instruction {
 	char type;
 	int length;
 	std::string info;
-	std::string content;
+	//std::string content;
 };
 
 #endif

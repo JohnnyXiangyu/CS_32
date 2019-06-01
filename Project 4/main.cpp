@@ -1,3 +1,22 @@
+#if defined(_MSC_VER)  &&  !defined(_DEBUG)
+#include <iostream>
+#include <windows.h>
+#include <conio.h>
+
+struct KeepWindowOpenUntilDismissed
+{
+	~KeepWindowOpenUntilDismissed()
+	{
+		DWORD pids[1];
+		if (GetConsoleProcessList(pids, 1) == 1)
+		{
+			std::cout << "Press any key to continue . . . ";
+			_getch();
+		}
+	}
+} keepWindowOpenUntilDismissed;
+#endif
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -7,24 +26,28 @@
 #include <functional>
 #include <list>
 #include "HashTable.h"
+#include "Utilities.h"
 using namespace std;
 
 void printInstruction(ostream& _diff, const list<Instruction>& instructions) {
-	for (list<Instruction>::const_iterator i = instructions.begin(); i != instructions.end(); i++)
-		_diff << (*i).content;
+	for (list<Instruction>::const_iterator i = instructions.begin(); i != instructions.end(); i++) {
+		_diff << (*i).type << (*i).length;
+		if ((*i).type == 'A')
+			_diff << ":" << (*i).info;
+		else
+			_diff << "," << (*i).info;
+	}
 }
 
 void createDiff(istream& _old, istream& _new, ostream& _diff) {
-	const int SLICELEN = 8;
+	const int SLICELEN = 65;
 	
-	string oldFile, newFile;
 	//read file into the strings
+	string oldFile(""), newFile("");
 	while (_old) {
 		string temp;
 		getline(_old, temp);
 		oldFile += temp;
-		//how do we process newline symbol?
-		//oldFile += '\n';
 	}
 	while (_new) {
 		string temp;
@@ -35,24 +58,17 @@ void createDiff(istream& _old, istream& _new, ostream& _diff) {
 	//slice the old string
 		//the hash class looks unreliable
 	HashTable table;
-	{
-		int remain = oldFile.size();
-		int index = 0;
-		while (remain > 0) {
-			string temp;//slice the file into specified lengths
-			temp = oldFile.substr(index, SLICELEN);
+	int pos = 0;
+	while (pos < oldFile.size()) {
+		string temp = oldFile.substr(pos, SLICELEN);//slice the file into specified lengths
+		table.push(pos, temp); //push it into the hash table
+		
+		pos += temp.length();
+	}
 
-			table.push(index, temp); //push it into the hash table
-			
-			remain -= temp.length();
-			index += temp.length();
-		}
-		assert(remain == 0);
-		assert(index == oldFile.size() - 1);
-	} //delete all temporary variables here
 
 	//look for all matches
-	//TODO: instruction construction problem
+	//TODO: instruction has bugs
 	list<Instruction> instructions;
 	int index = 0;
 	while (index < newFile.size()) {
@@ -60,16 +76,19 @@ void createDiff(istream& _old, istream& _new, ostream& _diff) {
 		string seg = newFile.substr(index, SLICELEN);
 		queue<Item> results;
 		if (table.search(seg, results)) {
-			//TODO: if found, start to loop deeper into the string
+			//if found, start to loop deeper into the string
 			queue<Instruction> temp_commands;
 			while (!results.empty()) {
 				int j = (results.front().offset + results.front().content.size());
-				int k = index;
-				while (j < oldFile.size() && k < newFile.size() && oldFile[j] == newFile[k])
-					;
+				int k = index + results.front().content.size();
+				while (j < oldFile.size() && k < newFile.size() && oldFile[j] == newFile[k]) {
+					j++;
+					k++;
+				}
 				temp_commands.push(Instruction(j - results.front().offset, results.front().offset)); //copy instruction
 				results.pop();
 			}
+
 			//choose the longest copy instruction
 			Instruction chosen = temp_commands.front();
 			temp_commands.pop();
@@ -78,18 +97,19 @@ void createDiff(istream& _old, istream& _new, ostream& _diff) {
 					chosen = temp_commands.front();
 				temp_commands.pop();
 			}
+
 			//finalize the copy instruction
 			instructions.push_back(chosen);
-
 			index += chosen.length;
 		}
 		else {
 			//if not found, an ADD instruction will be added
-			string temp = "" + newFile[index];
+			string temp = ""; 
+			temp += newFile[index];
 			Instruction newGuy(1, temp); //add instruction
 
 			//merge two continuous ADD instructions
-			if (instructions.back().type == 'A') {
+			if (!instructions.empty() && instructions.back().type == 'A') {
 				newGuy = instructions.back().merge(newGuy);
 				instructions.pop_back();
 			}
@@ -181,6 +201,7 @@ void myTest() {
 	ofstream diffFile("_diff.txt", ios::binary);
 
 	createDiff(oldFile, newFile, diffFile);
+	diffFile.close();
 }
 
 

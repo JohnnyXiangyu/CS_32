@@ -13,6 +13,13 @@ HashTable::HashTable() {
 	}
 }
 
+HashTable::~HashTable() {
+	for (long long i = 0; i < 99999989; i++) {
+		if (m_items[i] != nullptr)
+			delete m_items[i];
+	}
+}
+
 int HashTable::push(int start, const string& newItem) {
 	long long value = hash<string>()(newItem);
 	if (m_items[value % 99999989] == nullptr) {
