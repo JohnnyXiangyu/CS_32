@@ -29,16 +29,6 @@ struct KeepWindowOpenUntilDismissed
 #include "Utilities.h"
 using namespace std;
 
-void printInstruction(ostream& _diff, const list<Instruction>& instructions) {
-	for (list<Instruction>::const_iterator i = instructions.begin(); i != instructions.end(); i++) {
-		_diff << (*i).type << (*i).length;
-		if ((*i).type == 'A')
-			_diff << ":" << (*i).info;
-		else
-			_diff << "," << (*i).info;
-	}
-}
-
 void createDiff(istream& _old, istream& _new, ostream& _diff) {
 	const int SLICELEN = 65;
 	
@@ -58,7 +48,7 @@ void createDiff(istream& _old, istream& _new, ostream& _diff) {
 	//slice the old string
 		//the hash class looks unreliable
 	HashTable table;
-	int pos = 0;
+	size_t pos = 0;
 	while (pos < oldFile.size()) {
 		string temp = oldFile.substr(pos, SLICELEN);//slice the file into specified lengths
 		table.push(pos, temp); //push it into the hash table
@@ -70,7 +60,7 @@ void createDiff(istream& _old, istream& _new, ostream& _diff) {
 	//look for all matches
 	//TODO: instruction has bugs
 	list<Instruction> instructions;
-	int index = 0;
+	size_t index = 0;
 	while (index < newFile.size()) {
 		//find all matches in the original file
 		string seg = newFile.substr(index, SLICELEN);
@@ -79,7 +69,7 @@ void createDiff(istream& _old, istream& _new, ostream& _diff) {
 			//if found, start to loop deeper into the string
 			queue<Instruction> temp_commands;
 			while (!results.empty()) {
-				int j = (results.front().offset + results.front().content.size());
+				size_t j = (results.front().offset + results.front().content.size());
 				int k = index + results.front().content.size();
 				while (j < oldFile.size() && k < newFile.size() && oldFile[j] == newFile[k]) {
 					j++;
@@ -119,14 +109,42 @@ void createDiff(istream& _old, istream& _new, ostream& _diff) {
 		}
 	}
 
-	//TODO: output instructions to the file
+	//output instructions to the file
 	printInstruction(_diff, instructions);
 }
 
 bool applyDiff(istream& _old, istream& _diff, ostream& _new) {
+	//TODO: load diff file
+	string oldFile(""), diffFile("");
+	while (_old) {
+		string temp;
+		getline(_old, temp);
+		oldFile += temp;
+	}
+	while (_diff) {
+		string temp;
+		getline(_diff, temp);
+		diffFile += temp;
+	}
+	
+	queue<Instruction> instructions;
+	//TODO: break the diff file into instructions
+	int pos = 0;
+	while (pos < diffFile.length()) {
+		char thisChar = diffFile[pos];
+		if (thisChar == 'A' || thisChar == 'C') {
+			//TODO: process a addition intruction
+			int start = pos;
+			instructions.push(readInstruction(diffFile, start, pos));
+			assert(diffFile[pos] == 'A' || diffFile[pos] == 'C');
+		}
+		else
+			return false; //it means something is wrong
+	}
 
+	//TODO: print new file using instructions
 
-	return false;
+	return true;
 }
 
 bool runtest(string oldName, string newName, string diffName, string newName2)
@@ -210,7 +228,9 @@ int main()
 	//assert(runtest("myoldfile.txt", "mynewfile.txt", "mydifffile.txt", "mynewfile2.txt"));
 	//cerr << "Test PASSED" << endl;
 	
-	myTest();
+	//myTest();
+	int n = 0;
+	Instruction test = readInstruction("A6:100000", 0, n);
 
 	return 0;
 }

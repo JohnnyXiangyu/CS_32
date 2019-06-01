@@ -1,5 +1,8 @@
 #ifndef UTILITIES
-#define UTILITIES 1
+#define UTILITIES 10
+#include <iostream>
+#include <list>
+#include <fstream>
 #include <string>
 #include <cassert>
 
@@ -39,5 +42,10 @@ struct Instruction {
 	std::string info;
 	//std::string content;
 };
+
+int number(std::string s, int& index);
+void printInstruction(std::ostream& _diff, const std::list<Instruction>& instructions);
+bool doInstruction(const std::queue<Instruction>& instructions);
+Instruction readInstruction(const std::string& diff, int start, int& nextInstruction);
 
 #endif
