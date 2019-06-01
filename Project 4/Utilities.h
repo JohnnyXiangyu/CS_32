@@ -1,9 +1,10 @@
 #ifndef UTILITIES
 #define UTILITIES 1
 #include <string>
+#include <cassert>
 
-struct item {
-	item(int start, std::string data) :
+struct Item {
+	Item(int start, std::string data) :
 		len(data.size()), offset(start), content(data)
 	{}
 	int len;
@@ -11,42 +12,32 @@ struct item {
 	std::string content;
 };
 
-struct instruction {
+struct Instruction {
 	//a class marking each block of instruction
-public:
-	instruction(int length, std::string newWord) :
-		m_type('A'), m_len(length), m_content("")
+	Instruction(int length, std::string newWord) :
+		type('A'), length(length), content("")
 	{
-		m_content += m_type + std::to_string(m_len) + ':' + newWord;
-		m_info = newWord;
+		content = "A" + std::to_string(length) + ':' + newWord;
+		info = newWord;
 	}
 
-	instruction(int length, int offset) :
-		m_type('C'), m_len(length), m_content("")
+	Instruction(int length, int offset) :
+		type('C'), length(length), content("")
 	{
-		m_content = "" + m_type + std::to_string(m_len) + ',' + std::to_string(offset);
-		m_info = std::to_string(offset);
+		content = "C" + std::to_string(length) + ',' + std::to_string(offset);
+		info = std::to_string(offset);
 	}
 
-	instruction merge(const instruction& later) {
+	Instruction merge(const Instruction& later) {
 		//please only use for add instructions
-		return instruction(m_len + later.m_len, m_content + later.m_content);
+		//std::assert(type == later.type);
+		return Instruction(length + later.length, info + later.info);
 	}
 
-	inline
-		char type() { return m_type; }
-	inline
-		int length() { return m_len; }
-	inline
-		std::string content() { return m_content; }
-	inline
-		std::string info() { return m_info; }
-
-private:
-	char m_type;
-	int m_len;
-	std::string m_info;
-	std::string m_content;
+	char type;
+	int length;
+	std::string info;
+	std::string content;
 };
 
 #endif

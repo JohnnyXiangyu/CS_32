@@ -11,10 +11,10 @@ public:
 	HashTable();
 	//push the given segment into hash table, and return the hash value of this segment
 	int push(int start, const std::string& newItem);
-	bool search(const std::string& seg, std::queue<item>& results);
+	bool search(const std::string& seg, std::queue<Item>& results);
 
 private:
-	std::vector<std::vector<item>> m_items;
+	std::vector<std::vector<Item>*> m_items;
 };
 
 
