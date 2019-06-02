@@ -57,7 +57,7 @@ bool HashTable::search(const std::string& seg, std::queue<Item>& results) {
 
 void fillTable(std::string s, HashTable& table, int SLICELEN) {
 	size_t pos = 0;
-	while (pos < s.size()) {
+	while (pos + SLICELEN <= s.size()) {
 		string temp = "";
 		temp = s.substr(pos, SLICELEN);//slice the file into specified lengths
 		table.push(pos, temp); //push it into the hash table
