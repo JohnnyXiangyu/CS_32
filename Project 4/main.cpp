@@ -34,34 +34,20 @@ using namespace std;
 void createDiff(istream& _old, istream& _new, ostream& _diff) { //TODO
 	const int SLICELEN = 1;
 	
-	//read file into the strings
+	//read file into the strings //reconstructed
 	string oldFile(""), newFile("");
-	char temp;
-	while (_old.get(temp)) {
-		oldFile += temp;
-	}
-	while (_new.get(temp)) {
-		newFile += temp;
-	}
+	takeString(_old, oldFile);
+	takeString(_new, newFile);
 
 	//slice the old string
-		//the hash class looks unreliable
 	HashTable table;
-	size_t pos = 0;
-	while (pos < oldFile.size()) {
-		string temp = "";
-		temp = oldFile.substr(pos, SLICELEN);//slice the file into specified lengths
-		table.push(pos, temp); //push it into the hash table
-		
-		pos += temp.length();
-	}
-
+	fillTable(oldFile, table, SLICELEN);
 
 	//look for all matches
 	list<Instruction> instructions;
 	size_t index = 0;
 	while (index < newFile.size()) {
-		//find all matches in the original file
+		//find all matches in the table
 		string seg = newFile.substr(index, SLICELEN);
 		queue<Item> results;
 		if (table.search(seg, results)) {
@@ -77,20 +63,9 @@ void createDiff(istream& _old, istream& _new, ostream& _diff) { //TODO
 				temp_commands.push(Instruction(j - results.front().offset, results.front().offset)); //copy instruction
 				results.pop();
 			}
-
 			//choose the longest copy instruction
-			//TODO: add a new logic, combine length and offset
-			Instruction chosen = temp_commands.front();
-			temp_commands.pop();
-			while (!temp_commands.empty()) {
-
-				if (chosen.length < temp_commands.front().length)
-					chosen = temp_commands.front();
-				else if (chosen.length == temp_commands.front().length && number(chosen.info) > number(temp_commands.front().info))
-					chosen = temp_commands.front();
-				temp_commands.pop();
-			}
-
+				//TODO: add a new logic, combine length and offset
+			Instruction chosen = compareInstructions(temp_commands);
 			//finalize the copy instruction
 			instructions.push_back(chosen);
 			index += chosen.length;
@@ -107,28 +82,22 @@ void createDiff(istream& _old, istream& _new, ostream& _diff) { //TODO
 				instructions.pop_back();
 			}
 			instructions.push_back(newGuy);
-
 			index++;
 		}
 	}
 
-	//output instructions to the file
+	//output instructions to file
 	printInstruction(_diff, instructions);
 }
 
 bool applyDiff(istream& _old, istream& _diff, ostream& _new) {
-	//load diff file
+	//load diff file //reconstructed
 	string oldFile(""), diffFile("");
-	char temp;
-	while (_old.get(temp)) {
-		oldFile += temp;
-	}
-	while (_diff.get(temp)) {
-		diffFile += temp;
-	}
+	takeString(_old, oldFile);
+	takeString(_diff, diffFile);
 	
-	queue<Instruction> instructions;
 	//break the diff file into instructions
+	queue<Instruction> instructions;
 	int pos = 0;
 	while (pos < diffFile.length()) {
 		char thisChar = diffFile[pos];
@@ -146,23 +115,69 @@ bool applyDiff(istream& _old, istream& _diff, ostream& _new) {
 	return doInstruction(oldFile, _new, instructions);
 }
 
-void runtest(string oldtext, string newtext)
+bool runtest(string oldName, string newName, string diffName, string newName2)
 {
-	istringstream oldFile(oldtext);
-	istringstream newFile(newtext);
-	ostringstream diffFile;
+	if (diffName == oldName || diffName == newName ||
+		newName2 == oldName || newName2 == diffName ||
+		newName2 == newName)
+	{
+		cerr << "Files used for output must have names distinct from other files" << endl;
+		return false;
+	}
+	ifstream oldFile(oldName, ios::binary);
+	if (!oldFile)
+	{
+		cerr << "Cannot open " << oldName << endl;
+		return false;
+	}
+	ifstream newFile(newName, ios::binary);
+	if (!newFile)
+	{
+		cerr << "Cannot open " << newName << endl;
+		return false;
+	}
+	ofstream diffFile(diffName, ios::binary);
+	if (!diffFile)
+	{
+		cerr << "Cannot create " << diffName << endl;
+		return false;
+	}
 	createDiff(oldFile, newFile, diffFile);
-	string result = diffFile.str();
-	cout << "The diff file length is " << result.size()
-		<< " and its text is " << endl;
-	cout << result << endl;
+	diffFile.close();
 
 	oldFile.clear();   // clear the end of file condition
-	oldFile.seekg(0);  // reset back to beginning of the stream
-	istringstream diffFile2(result);
-	ostringstream newFile2;
+	oldFile.seekg(0);  // reset back to beginning of the file
+	ifstream diffFile2(diffName, ios::binary);
+	if (!diffFile2)
+	{
+		cerr << "Cannot read the " << diffName << " that was just created!" << endl;
+		return false;
+	}
+	ofstream newFile2(newName2, ios::binary);
+	if (!newFile2)
+	{
+		cerr << "Cannot create " << newName2 << endl;
+		return false;
+	}
 	assert(applyDiff(oldFile, diffFile2, newFile2));
-	assert(newtext == newFile2.str());
+	newFile2.close();
+
+	newFile.clear();
+	newFile.seekg(0);
+	ifstream newFile3(newName2, ios::binary);
+	if (!newFile)
+	{
+		cerr << "Cannot open " << newName2 << endl;
+		return false;
+	}
+	if (!equal(istreambuf_iterator<char>(newFile), istreambuf_iterator<char>(),
+		istreambuf_iterator<char>(newFile3), istreambuf_iterator<char>()))
+	{
+		cerr << newName2 << " is not identical to " << newName
+			<< "; test FAILED" << endl;
+			return false;
+	}
+	return true;
 }
 
 void myTest() {
@@ -194,22 +209,12 @@ void myTest() {
 	newnew.close();
 }
 
-
 int main()
 {
-	//runtest("There's a bathroom on the right.",
-	//	"There's a bad moon on the rise.");
-	//runtest("ABCDEFGHIJBLAHPQRSTUVPQRSTUV",
-	//	"XYABCDEFGHIJBLETCHPQRSTUVPQRSTQQELF");
-	//cerr << "All tests passed" << endl;
+	//assert(runtest("_old.txt", "_new.txt", "_diff.txt", "_new2.txt"));
+	//cerr << "Test PASSED" << endl;
 	
 	myTest();
-
-	//for (int i = 1; i <= 100; i++) {
-	//	cerr << i << ": \n";
-	//	myTest(i);
-	//}
-
 	
 	return 0;
 }

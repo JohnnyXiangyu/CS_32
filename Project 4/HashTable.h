@@ -19,5 +19,7 @@ private:
 	long long m_capacity;
 };
 
+void fillTable(std::string s, HashTable& table, int SLICELEN);
+
 
 #endif // !HASHTABLE

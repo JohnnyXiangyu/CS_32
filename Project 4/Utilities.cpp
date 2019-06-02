@@ -6,6 +6,14 @@
 #include "Utilities.h"
 using namespace std;
 
+void takeString(istream& _source, string& _string) {
+	_string = "";
+	char temp;
+	while (_source.get(temp)) {
+		_string += temp;
+	}
+}
+
 int number(std::string s, int& index)
 {
 	int result = 0;
@@ -33,6 +41,21 @@ int number(std::string s)
 		}
 	}
 	return(result);
+}
+
+Instruction compareInstructions(queue<Instruction>& temp_commands) {
+	Instruction chosen = temp_commands.front();
+	temp_commands.pop();
+	while (!temp_commands.empty()) {
+
+		if (chosen.length < temp_commands.front().length)
+			chosen = temp_commands.front();
+		else if (chosen.length == temp_commands.front().length && number(chosen.info) > number(temp_commands.front().info))
+			chosen = temp_commands.front();
+		temp_commands.pop();
+	}
+
+	return chosen;
 }
 
 void printInstruction(ostream& _diff, const list<Instruction>& instructions) {
