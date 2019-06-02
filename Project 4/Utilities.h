@@ -17,6 +17,12 @@ struct Item {
 
 struct Instruction {
 	//a class marking each block of instruction
+	Instruction(int wrong, int wrong2, int wrong3) :
+		type('E'), length(0)
+	{
+
+	}
+	
 	Instruction(int length, std::string newWord) :
 		type('A'), length(length)//, content("")
 	{
@@ -44,8 +50,9 @@ struct Instruction {
 };
 
 int number(std::string s, int& index);
+int number(std::string s);
 void printInstruction(std::ostream& _diff, const std::list<Instruction>& instructions);
-bool doInstruction(const std::queue<Instruction>& instructions);
+bool doInstruction(std::string oldFile, std::ostream& _new, std::queue<Instruction> instructions);
 Instruction readInstruction(const std::string& diff, int start, int& nextInstruction);
 
 #endif
