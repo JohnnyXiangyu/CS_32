@@ -205,7 +205,7 @@ void testRound(string oldName, string newName) {
 	ofstream newnew("_new2.txt", ios::binary);
 
 	if (applyDiff(oldFile, diffFile2, newnew))
-		cerr << "    Diff valid" << endl << endl;
+		cerr << "    diff valid" << endl << endl;
 	newnew.close();
 }
 
