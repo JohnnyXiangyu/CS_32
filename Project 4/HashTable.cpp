@@ -7,10 +7,10 @@
 using namespace std;
 
 HashTable::HashTable() :
-	m_capacity(99999989)
+	m_capacity(99991)
 {
 	
-	for (long long i = 0; i < m_capacity; i++) {
+	for (int i = 0; i < m_capacity; i++) {
 		m_items.push_back(nullptr);
 	}
 }
@@ -25,20 +25,18 @@ HashTable::~HashTable()
 
 long long HashTable::push(int start, const string& newItem) {
 	//TODO: sort the bucket by offset small to big
-	long long value = hash<string>()(newItem);
-	if (m_items[value % m_capacity] == nullptr) {
-		m_items[value % m_capacity] = new vector<Item>;
+	if (m_items[hash<string>()(newItem) % m_capacity] == nullptr) {
+		m_items[hash<string>()(newItem) % m_capacity] = new vector<Item>;
 	}
 
-	(*m_items[value % m_capacity]).push_back(Item(start, newItem));
-	return value;
+	(*m_items[hash<string>()(newItem) % m_capacity]).push_back(Item(start, newItem));
+	return hash<string>()(newItem);
 }
 
 bool HashTable::search(const std::string& seg, std::queue<Item>& results) {
 	bool yesFound = false;
 	vector<Item> found;
-	long long fInd = hash<string>()(seg); 
-	fInd %= m_capacity;
+	int fInd = hash<string>()(seg) % m_capacity;
 	if (*(m_items.begin() + fInd) == nullptr)
 		return false;
 	else

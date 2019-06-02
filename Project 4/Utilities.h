@@ -5,6 +5,28 @@
 #include <fstream>
 #include <string>
 #include <cassert>
+#include <chrono>
+
+class Timer
+{
+public:
+	Timer()
+	{
+		start();
+	}
+	void start()
+	{
+		m_time = std::chrono::high_resolution_clock::now();
+	}
+	double elapsed() const
+	{
+		std::chrono::duration<double, std::milli> diff =
+			std::chrono::high_resolution_clock::now() - m_time;
+		return diff.count();
+	}
+private:
+	std::chrono::high_resolution_clock::time_point m_time;
+};
 
 struct Item {
 	Item(int start, std::string data) :
@@ -17,7 +39,7 @@ struct Item {
 
 struct Instruction {
 	Instruction(int wrong, int wrong2, int wrong3) :
-		type('E'), length(0) //error
+		type('E'), length(wrong + wrong2 + wrong3) //error
 	{}
 	
 	Instruction(int length, std::string newWord) :

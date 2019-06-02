@@ -185,7 +185,11 @@ void testRound(string oldName, string newName) {
 	ifstream newFile(newName, ios::binary);
 	ofstream diffFile("_diff.txt", ios::binary);
 
+	cerr << oldName << ":" << endl;
+
+	Timer t;
 	createDiff(oldFile, newFile, diffFile);
+	cerr << "createDiff(): \n    " << t.elapsed() << " ms" << endl;
 	diffFile.close();
 
 	ifstream diffFile2("_diff.txt", ios::binary);
@@ -194,7 +198,7 @@ void testRound(string oldName, string newName) {
 	while (diffFile2.get(ttt)) {
 		i += 1;
 	}
-	cerr << oldName << " got " << i << "bytes." << endl;
+	cerr << "    " << i << " bytes." << endl;
 
 	oldFile.clear();   // clear the end of file condition
 	oldFile.seekg(0);  // reset back to beginning of the stream
@@ -204,24 +208,55 @@ void testRound(string oldName, string newName) {
 
 	ofstream newnew("_new2.txt", ios::binary);
 
+	t.start();
 	if (applyDiff(oldFile, diffFile2, newnew))
-		cerr << "    diff valid" << endl << endl;
+		cerr << "applyDiff(): \n    " << t.elapsed() << " ms" << endl << endl;
 	newnew.close();
 }
 
 void myTest() {
-	testRound("testCases/greeneggs1.txt", "testCases/greeneggs2.txt");
-	testRound("testCases/smallmart1.txt", "testCases/smallmart2.txt");
-	testRound("testCases/strange1.txt", "testCases/strange2.txt");
-	testRound("testCases/warandpeace1.txt", "testCases/warandpeace2.txt");
+	while (true) {
+		cerr << "Select test case \n(1 smallmart | 2 greeneggs | 3 war and peace | 4 strange file | 114514 quit):" << endl;
+		int num = 0;
+		cin >> num;
+		switch (num) {
+		case 1:
+			testRound("testCases/smallmart1.txt", "testCases/smallmart2.txt");
+			break;
+		case 2:
+			testRound("testCases/greeneggs1.txt", "testCases/greeneggs2.txt");
+			break;
+		case 3:
+			testRound("testCases/warandpeace1.txt", "testCases/warandpeace2.txt");
+			break;
+		case 4:
+			testRound("testCases/strange1.txt", "testCases/strange2.txt");
+			break;
+		case 114514:
+			return;
+			break;
+		default:
+			cerr << "Invalid input." << endl;
+			break;
+		}
+	}
+}
+
+void profTest() {
+	assert(runtest("testCases/smallmart1.txt", "testCases/smallmart2.txt", "_diff.txt", "_new2.txt"));
+	cerr << "passes smallmart" << endl;
+	assert(runtest("testCases/greeneggs1.txt", "testCases/greeneggs2.txt", "_diff.txt", "_new2.txt"));
+	cerr << "passes greeneggs" << endl;
+	assert(runtest("testCases/warandpeace1.txt", "testCases/warandpeace2.txt", "_diff.txt", "_new2.txt"));
+	cerr << "passes warandpeace" << endl;
+	assert(runtest("testCases/strange1.txt", "testCases/strange2.txt", "_diff.txt", "_new2.txt"));
+	cerr << "passes strange" << endl;
+	cerr << "Test PASSED" << endl;
 }
 
 int main()
-{
-	//assert(runtest("_old.txt", "_new.txt", "_diff.txt", "_new2.txt"));
-	//cerr << "Test PASSED" << endl;
-	
+{	
 	myTest();
-	
+	//profTest(); //debug only
 	return 0;
 }

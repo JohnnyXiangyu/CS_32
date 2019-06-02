@@ -16,7 +16,7 @@ public:
 
 private:
 	std::vector<std::vector<Item>*> m_items;
-	long long m_capacity;
+	int m_capacity;
 };
 
 void fillTable(std::string s, HashTable& table, int SLICELEN);
