@@ -32,7 +32,7 @@ struct KeepWindowOpenUntilDismissed
 using namespace std;
 
 void createDiff(istream& _old, istream& _new, ostream& _diff) { //TODO
-	const int SLICELEN = 1;
+	const int SLICELEN = 8;
 	
 	//read file into the strings //reconstructed
 	string oldFile(""), newFile("");
@@ -180,9 +180,9 @@ bool runtest(string oldName, string newName, string diffName, string newName2)
 	return true;
 }
 
-void myTest() {
-	ifstream oldFile("_old.txt", ios::binary);
-	ifstream newFile("_new.txt", ios::binary);
+void testRound(string oldName, string newName) {
+	ifstream oldFile(oldName, ios::binary);
+	ifstream newFile(newName, ios::binary);
 	ofstream diffFile("_diff.txt", ios::binary);
 
 	createDiff(oldFile, newFile, diffFile);
@@ -194,7 +194,7 @@ void myTest() {
 	while (diffFile2.get(ttt)) {
 		i += 1;
 	}
-	cerr << i << endl;
+	cerr << oldName << " got " << i << "bytes." << endl;
 
 	oldFile.clear();   // clear the end of file condition
 	oldFile.seekg(0);  // reset back to beginning of the stream
@@ -205,8 +205,15 @@ void myTest() {
 	ofstream newnew("_new2.txt", ios::binary);
 
 	if (applyDiff(oldFile, diffFile2, newnew))
-		cerr << "    It's fine." << endl << endl;
+		cerr << "    Diff valid" << endl << endl;
 	newnew.close();
+}
+
+void myTest() {
+	testRound("testCases/greeneggs1.txt", "testCases/greeneggs2.txt");
+	testRound("testCases/smallmart1.txt", "testCases/smallmart2.txt");
+	testRound("testCases/strange1.txt", "testCases/strange2.txt");
+	testRound("testCases/warandpeace1.txt", "testCases/warandpeace2.txt");
 }
 
 int main()

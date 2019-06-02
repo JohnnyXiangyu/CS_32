@@ -62,6 +62,6 @@ void fillTable(std::string s, HashTable& table, int SLICELEN) {
 		temp = s.substr(pos, SLICELEN);//slice the file into specified lengths
 		table.push(pos, temp); //push it into the hash table
 
-		pos += temp.length();
+		pos ++;
 	}
 }
