@@ -105,7 +105,8 @@ bool applyDiff(istream& _old, istream& _diff, ostream& _new) {
 			//process an intruction
 			int start = pos;
 			instructions.push(readInstruction(diffFile, start, pos));
-			assert(instructions.back().type != 'E');
+			if (instructions.back().type == 'E')
+				return false;
 		}
 		else
 			return false; //it means something is wrong
@@ -185,7 +186,11 @@ void testRound(string oldName, string newName) {
 	ifstream newFile(newName, ios::binary);
 	ofstream diffFile("_diff.txt", ios::binary);
 
+	cerr << oldName << ":" << endl;
+
+	Timer t;
 	createDiff(oldFile, newFile, diffFile);
+	cerr << "createDiff(): \n    " << t.elapsed() << " ms" << endl;
 	diffFile.close();
 
 	ifstream diffFile2("_diff.txt", ios::binary);
@@ -194,7 +199,8 @@ void testRound(string oldName, string newName) {
 	while (diffFile2.get(ttt)) {
 		i += 1;
 	}
-	cerr << oldName << " got " << i << "bytes." << endl;
+	cerr << "File size:" << endl;
+	cerr << "    " << i << " bytes." << endl;
 
 	oldFile.clear();   // clear the end of file condition
 	oldFile.seekg(0);  // reset back to beginning of the stream
@@ -204,24 +210,98 @@ void testRound(string oldName, string newName) {
 
 	ofstream newnew("_new2.txt", ios::binary);
 
+	t.start();
 	if (applyDiff(oldFile, diffFile2, newnew))
-		cerr << "    diff valid" << endl << endl;
+		cerr << "applyDiff(): \n    " << t.elapsed() << " ms" << endl << endl;
+	else
+		cerr << "diff file content error\n\n";
 	newnew.close();
 }
 
 void myTest() {
-	testRound("testCases/greeneggs1.txt", "testCases/greeneggs2.txt");
-	testRound("testCases/smallmart1.txt", "testCases/smallmart2.txt");
-	testRound("testCases/strange1.txt", "testCases/strange2.txt");
-	testRound("testCases/warandpeace1.txt", "testCases/warandpeace2.txt");
+	while (true) {
+		cerr << "Select test case \n" <<
+			"---------------------------------------------------------------------------\n" <<
+			"|1 smallmart | 2 greeneggs | 3 warandpeace | 4 strange | 5 other | 0 quit |\n" <<
+			"---------------------------------------------------------------------------\n";
+		int num = 0;
+		cin >> num;
+		if (num == 1)
+			testRound("testCases/smallmart1.txt", "testCases/smallmart2.txt");
+		else if (num == 2)
+			testRound("testCases/greeneggs1.txt", "testCases/greeneggs2.txt");
+		else if (num == 3)
+			testRound("testCases/warandpeace1.txt", "testCases/warandpeace2.txt");
+		else if (num == 4)
+			testRound("testCases/strange1.txt", "testCases/strange2.txt");
+		else if (num == 5) {
+			int other;
+			string oldName, newName;
+			cerr << "Select function\n" <<
+				"-------------------------------------\n" <<
+				"|1 createDiff | 2 applyDiff | 3 both|\n" <<
+				"-------------------------------------\n";
+			cin >> other;
+			cerr << "old file name: ";
+			cin >> oldName;
+			if (other == 1) {
+				cerr << "new file name: ";
+				cin >> newName;
+				ifstream oldFile(oldName, ios::binary);
+				ifstream newFile(newName, ios::binary);
+				ofstream diffFile("_diff.txt", ios::binary);
+				Timer t;
+				createDiff(oldFile, newFile, diffFile);
+				cerr << "createDiff(): \n    " << t.elapsed() << " ms" << endl;
+				diffFile.close();
+				ifstream diffFile2("_diff.txt", ios::binary);
+				int i = 0;
+				char ttt;
+				while (diffFile2.get(ttt)) {
+					i += 1;
+				}
+				cerr << "File size:" << endl;
+				cerr << "    " << i << " bytes.\n\n";
+			}
+			else if (other == 2) {
+				ifstream oldFile(oldName, ios::binary);
+				ifstream diffFile("_diff.txt", ios::binary);
+				ofstream newnew("_new2.txt", ios::binary);
+				Timer t;
+				if (applyDiff(oldFile, diffFile, newnew))
+					cerr << "applyDiff(): \n    " << t.elapsed() << " ms\n\n";
+				else
+					cerr << "diff file content error\n\n";
+				newnew.close();
+			}
+			else if (other == 3) {
+				cerr << "new file name: ";
+				cin >> newName;
+				testRound(oldName, newName);
+			}
+		}
+		else if (num == 0)
+			return;
+		else
+			cerr << "Invalid input." << endl;
+	}
+}
+
+void profTest() {
+	assert(runtest("testCases/smallmart1.txt", "testCases/smallmart2.txt", "_diff.txt", "_new2.txt"));
+	cerr << "passes smallmart" << endl;
+	assert(runtest("testCases/greeneggs1.txt", "testCases/greeneggs2.txt", "_diff.txt", "_new2.txt"));
+	cerr << "passes greeneggs" << endl;
+	assert(runtest("testCases/warandpeace1.txt", "testCases/warandpeace2.txt", "_diff.txt", "_new2.txt"));
+	cerr << "passes warandpeace" << endl;
+	//assert(runtest("testCases/strange1.txt", "testCases/strange2.txt", "_diff.txt", "_new2.txt"));
+	//cerr << "passes strange" << endl;
+	cerr << "Test PASSED" << endl;
 }
 
 int main()
-{
-	//assert(runtest("_old.txt", "_new.txt", "_diff.txt", "_new2.txt"));
-	//cerr << "Test PASSED" << endl;
-	
+{	
 	myTest();
-	
+	//profTest(); //debug only
 	return 0;
 }

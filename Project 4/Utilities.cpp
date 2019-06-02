@@ -25,6 +25,8 @@ int number(std::string s, int& index)
 			index = index + 1;
 		}
 	}
+	else
+		return -1; //return -1 when the input is invalid
 	return(result);
 }
 
@@ -40,6 +42,8 @@ int number(std::string s)
 			index = index + 1;
 		}
 	}
+	else
+		return -1;
 	return(result);
 }
 
@@ -74,17 +78,22 @@ bool doInstruction(std::string oldFile, ostream& _new, queue<Instruction> instru
 		Instruction thisInstruction = instructions.front();
 		instructions.pop();
 		if (thisInstruction.type == 'A') {
-			//TODO: print the info part of this instruction into _new
+			//print the info part of this instruction into _new
 			_new << thisInstruction.info;
 		}
 		else if (thisInstruction.type == 'C') {
 			//TODO: use substr to get the copy segment
 			int temp = 0;
-			string newSeg = oldFile.substr(number(thisInstruction.info, temp), thisInstruction.length);
-			_new << newSeg;
+			int offset = number(thisInstruction.info, temp);
+			if (offset > -1 && offset + thisInstruction.length <= oldFile.size()) {
+				string newSeg = oldFile.substr(offset, thisInstruction.length);
+				_new << newSeg;
+			}
+			else
+				return false;
 		}
 		else
-			return false;
+			return false; //not supposed to be triggered
 	}
 	return true;
 }
@@ -93,9 +102,9 @@ Instruction readInstruction(const string& diff, int start, int& nextPos) {
 	//return a instruction from given string and index
 	//also gives information about next index
 	char thisChar = diff[start];
+	int pos = start + 1;
 
 	if (thisChar == 'A') {
-		int pos = start + 1;
 		int thisLength = number(diff, pos);
 		string thisInfo("");
 		for (int i = 0; i < thisLength; i++) {
@@ -106,13 +115,13 @@ Instruction readInstruction(const string& diff, int start, int& nextPos) {
 		return Instruction(thisLength, thisInfo);
 	}
 	else if (thisChar == 'C') {
-		int pos = start + 1;
 		int thisLength = number(diff, pos);
 		pos++;
 		int thisInfo = number(diff, pos); //the offset part of copy instruction
-		nextPos = pos;
-		return Instruction(thisLength, thisInfo);
+		if (thisInfo > -1) {
+			nextPos = pos;
+			return Instruction(thisLength, thisInfo);
+		}
 	}
-	else
-		return Instruction(1, 2, 3);
+	return Instruction(1, 2, 3); //error message
 }
