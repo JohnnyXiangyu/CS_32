@@ -1,0 +1,92 @@
+1.a
+                                50
+
+                20                                60
+
+    10                      40                              70
+
+       15              30                              65        80
+
+                     25  39                                    71
+
+1.b
+    pre-order: 50 20 10 15 40 30 25 39 60 70 65 80 71
+    in-order: 10 15 20 25 30 39 40 50 60 65 70 71 80
+    post-order: 15 10 25 39 30 40 20 65 71 80 70 60 50
+
+1.c
+                                50
+
+                25                               60
+
+    10                      40                              70
+
+       15                39                             65      80
+
+                                                                   71
+
+2.a
+struct Node {
+    Node* parent;
+    Node* leftChild;
+    Node* rightChild;
+    int data;
+};
+
+2.b
+insert(Node* thisPtr, int newData): Node* {
+    if (thisPtr is nullptr) {
+        ptr = new Node
+        ptr->data = newData
+        return ptr
+    }
+    else if (newData < thisPtr->data) {
+        ptr = insert(thisPtr->leftChild, newData)
+        thisPtr->leftChild = ptr
+        ptr->parent = thisPtr
+    } 
+    else if (newData > thisPre->data) {
+        ptr = insert(thisPtr->rightChild, newData)
+        thisPtr->rightChild = ptr
+        ptr->parent = thisPtr
+    }
+}
+
+3.a
+              7
+
+      3              6 
+
+   0    2        4  
+
+3.b
+index      0 1 2 3 4 5 
+content  7 3 6 0 2 4
+
+3.c
+index      0 1 2 3 4
+content  6 3 4 0 2
+
+4.a
+O(C + logS)
+
+4.b
+O(logC + S)
+
+4.c
+O(logC + logS)
+
+4.d
+O(logS)
+
+4.e
+O(1)
+
+4.f
+O(logC + logS)
+
+4.g
+O(C+S)
+
+4.h
+O(C)
